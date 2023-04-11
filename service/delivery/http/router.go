@@ -1,13 +1,18 @@
 package http
 
 import (
-	"net/http"
-
+	"github.com/arifmfh/go-mini-wallet/service"
 	"github.com/go-chi/chi"
 )
 
-func Router(r *chi.Mux) {
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
-	})
+type Handler struct {
+	WalletUsecase service.WalletUsecase
+}
+
+func Router(r *chi.Mux, walletUsecase service.WalletUsecase) {
+	h := &Handler{
+		WalletUsecase: walletUsecase,
+	}
+
+	r.Get("/", h.welcome)
 }
