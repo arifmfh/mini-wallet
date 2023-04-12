@@ -199,7 +199,7 @@ func (h Handler) deposit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(models.JSONResponse{
 		Status: "success",
 		Data: map[string]interface{}{

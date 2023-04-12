@@ -59,6 +59,14 @@ func (w *walletUsecase) GetWallet(costumerXID string) (data models.Wallet, code 
 }
 
 func (w *walletUsecase) Deposit(param models.Deposit) (data models.Deposit, code int, err error) {
+	isDuplicate, err := w.WalletRepo.DepositCheckReferenceID(param.ReferenceID)
+	if err != nil {
+		return data, 500, err
+	}
+	if isDuplicate {
+		return data, 400, fmt.Errorf("Duplicate reference_id")
+	}
+
 	wallet, err := w.WalletRepo.GetWallet(param.DepositedBy)
 	if err != nil {
 		return data, 500, err

@@ -84,7 +84,17 @@ func (w *walletRepository) EnableWallet(param models.Wallet) (data models.Wallet
 	return wallet, err
 }
 
+func (w *walletRepository) DepositCheckReferenceID(referenceID string) (IsDuplicate bool, err error) {
+	data := w.Get("deposit-" + referenceID + ":")
+	if data != "" {
+		return true, nil
+	}
+
+	return
+}
+
 func (w *walletRepository) Deposit(wallet models.Wallet, param models.Deposit) (data models.Deposit, err error) {
+
 	bytWallet, err := json.Marshal(wallet)
 	if err != nil {
 		return data, err
@@ -122,6 +132,11 @@ func (w *walletRepository) Deposit(wallet models.Wallet, param models.Deposit) (
 	}
 
 	err = w.Set("transaction-"+wallet.OwnedBy+":", string(bytTrxs))
+	if err != nil {
+		return data, err
+	}
+
+	err = w.Set("deposit-"+param.ReferenceID+":", param.ReferenceID)
 	if err != nil {
 		return data, err
 	}
