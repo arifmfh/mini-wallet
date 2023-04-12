@@ -127,6 +127,41 @@ func (h Handler) getWallet(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h Handler) getTransactions(w http.ResponseWriter, r *http.Request) {
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	costumerXID := claims["costumer_xid"].(string)
+
+	data, code, err := h.WalletUsecase.GetTransactions(costumerXID)
+	if err != nil {
+		if code == 400 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(models.JSONResponse{
+				Status: "fail",
+				Data: map[string]interface{}{
+					"error": err.Error(),
+				},
+			})
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(models.JSONResponse{
+				Status: "fail",
+				Data: map[string]interface{}{
+					"error": err.Error(),
+				},
+			})
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.JSONResponse{
+		Status: "success",
+		Data: map[string]interface{}{
+			"transactions": data,
+		},
+	})
+}
+
 func (h Handler) deposit(w http.ResponseWriter, r *http.Request) {
 	_, claims, _ := jwtauth.FromContext(r.Context())
 	costumerXID := claims["costumer_xid"].(string)
@@ -208,11 +243,57 @@ func (h Handler) deposit(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h Handler) getTransactions(w http.ResponseWriter, r *http.Request) {
+func (h Handler) withdraw(w http.ResponseWriter, r *http.Request) {
 	_, claims, _ := jwtauth.FromContext(r.Context())
 	costumerXID := claims["costumer_xid"].(string)
+	amountStr := r.FormValue("amount")
+	if amountStr == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.JSONResponse{
+			Status: "fail",
+			Data: map[string]interface{}{
+				"error": map[string]interface{}{
+					"amount": []string{"Missing data for required field."},
+				},
+			},
+		})
+		return
+	}
+	amount, err := strconv.ParseFloat(amountStr, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.JSONResponse{
+			Status: "fail",
+			Data: map[string]interface{}{
+				"error": map[string]interface{}{
+					"amount": []string{"Must be numeric."},
+				},
+			},
+		})
+		return
+	}
 
-	data, code, err := h.WalletUsecase.GetTransactions(costumerXID)
+	referenceID := r.FormValue("reference_id")
+	if referenceID == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.JSONResponse{
+			Status: "fail",
+			Data: map[string]interface{}{
+				"error": map[string]interface{}{
+					"reference_id": []string{"Missing data for required field."},
+				},
+			},
+		})
+		return
+	}
+
+	param := models.Withdraw{
+		WithdrawnBy: costumerXID,
+		Amount:      amount,
+		ReferenceID: referenceID,
+	}
+
+	data, code, err := h.WalletUsecase.Withdraw(param)
 	if err != nil {
 		if code == 400 {
 			w.WriteHeader(http.StatusBadRequest)
@@ -234,11 +315,11 @@ func (h Handler) getTransactions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(models.JSONResponse{
 		Status: "success",
 		Data: map[string]interface{}{
-			"transactions": data,
+			"withdrawal": data,
 		},
 	})
 }

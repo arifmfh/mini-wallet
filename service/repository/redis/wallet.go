@@ -106,7 +106,6 @@ func (w *walletRepository) DepositCheckReferenceID(referenceID string) (IsDuplic
 }
 
 func (w *walletRepository) Deposit(wallet models.Wallet, param models.Deposit) (data models.Deposit, err error) {
-
 	bytWallet, err := json.Marshal(wallet)
 	if err != nil {
 		return data, err
@@ -157,6 +156,70 @@ func (w *walletRepository) Deposit(wallet models.Wallet, param models.Deposit) (
 	param.DepositedBy = wallet.OwnedBy
 	param.Status = "success"
 	param.DepositedAt = now
+
+	return param, err
+}
+
+func (w *walletRepository) WithdrawCheckReferenceID(referenceID string) (IsDuplicate bool, err error) {
+	data := w.Get("withdraw-" + referenceID + ":")
+	if data != "" {
+		return true, nil
+	}
+
+	return
+}
+
+func (w *walletRepository) Withdraw(wallet models.Wallet, param models.Withdraw) (data models.Withdraw, err error) {
+	bytWallet, err := json.Marshal(wallet)
+	if err != nil {
+		return data, err
+	}
+
+	err = w.Set("wallet-"+wallet.OwnedBy+":", string(bytWallet))
+	if err != nil {
+		return data, err
+	}
+
+	id := uuid.New()
+	now := time.Now().Format("2006-01-02T15:04:05-0700")
+	trx := models.Transaction{
+		ID:           id.String(),
+		Status:       "success",
+		TransactedAt: now,
+		Type:         "withdrawal",
+		Amount:       param.Amount,
+		ReferenceID:  param.ReferenceID,
+	}
+
+	var trxs []models.Transaction
+	trxsStr := w.Get("transaction-" + wallet.OwnedBy + ":")
+	if trxsStr != "" {
+		err = json.Unmarshal([]byte(trxsStr), &trxs)
+		if err != nil {
+			return data, err
+		}
+	}
+	trxs = append(trxs, trx)
+
+	bytTrxs, err := json.Marshal(trxs)
+	if err != nil {
+		return data, err
+	}
+
+	err = w.Set("transaction-"+wallet.OwnedBy+":", string(bytTrxs))
+	if err != nil {
+		return data, err
+	}
+
+	err = w.Set("withdraw-"+param.ReferenceID+":", param.ReferenceID)
+	if err != nil {
+		return data, err
+	}
+
+	param.ID = id.String()
+	param.WithdrawnBy = wallet.OwnedBy
+	param.Status = "success"
+	param.WithdrawnAt = now
 
 	return param, err
 }

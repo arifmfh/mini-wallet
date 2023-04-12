@@ -113,3 +113,37 @@ func (w *walletUsecase) Deposit(param models.Deposit) (data models.Deposit, code
 
 	return data, 200, nil
 }
+
+func (w *walletUsecase) Withdraw(param models.Withdraw) (data models.Withdraw, code int, err error) {
+	isDuplicate, err := w.WalletRepo.WithdrawCheckReferenceID(param.ReferenceID)
+	if err != nil {
+		return data, 500, err
+	}
+	if isDuplicate {
+		return data, 400, fmt.Errorf("Duplicate reference_id")
+	}
+
+	wallet, err := w.WalletRepo.GetWallet(param.WithdrawnBy)
+	if err != nil {
+		return data, 500, err
+	}
+
+	if wallet.ID == "" {
+		return data, 400, fmt.Errorf("Wallet not found")
+	}
+	if wallet.Status != "enabled" {
+		return data, 400, fmt.Errorf("Wallet is disabled")
+	}
+
+	wallet.Balance -= param.Amount
+	if wallet.Balance < 0 {
+		return data, 400, fmt.Errorf("Balance not sufficient")
+	}
+
+	data, err = w.WalletRepo.Withdraw(wallet, param)
+	if err != nil {
+		return data, 500, err
+	}
+
+	return data, 200, nil
+}
