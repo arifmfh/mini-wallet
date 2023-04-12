@@ -4,7 +4,7 @@ This Project is fully written in GO and using Redis as database. This code struc
 And still need some Improvement below:
 - Implement FIFO Queue (Apache Kafka/rabbitMQ/Google Pubsub) for procesing transaction
 - Add Unit Testing 
-- Migrate to SQL database if necessary
+- Migrate to SQL database
 
 ## Prerequisites
 - Golang
