@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/arifmfh/go-mini-wallet/models"
 	"github.com/go-chi/jwtauth"
@@ -122,6 +123,87 @@ func (h Handler) getWallet(w http.ResponseWriter, r *http.Request) {
 		Status: "success",
 		Data: map[string]interface{}{
 			"wallet": data,
+		},
+	})
+}
+
+func (h Handler) deposit(w http.ResponseWriter, r *http.Request) {
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	costumerXID := claims["costumer_xid"].(string)
+	amountStr := r.FormValue("amount")
+	if amountStr == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.JSONResponse{
+			Status: "fail",
+			Data: map[string]interface{}{
+				"error": map[string]interface{}{
+					"amount": []string{"Missing data for required field."},
+				},
+			},
+		})
+		return
+	}
+	amount, err := strconv.ParseFloat(amountStr, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.JSONResponse{
+			Status: "fail",
+			Data: map[string]interface{}{
+				"error": map[string]interface{}{
+					"amount": []string{"Must be numeric."},
+				},
+			},
+		})
+		return
+	}
+
+	referenceID := r.FormValue("reference_id")
+	if referenceID == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.JSONResponse{
+			Status: "fail",
+			Data: map[string]interface{}{
+				"error": map[string]interface{}{
+					"reference_id": []string{"Missing data for required field."},
+				},
+			},
+		})
+		return
+	}
+
+	param := models.Deposit{
+		DepositedBy: costumerXID,
+		Amount:      amount,
+		ReferenceID: referenceID,
+	}
+
+	data, code, err := h.WalletUsecase.Deposit(param)
+	if err != nil {
+		if code == 400 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(models.JSONResponse{
+				Status: "fail",
+				Data: map[string]interface{}{
+					"error": err.Error(),
+				},
+			})
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(models.JSONResponse{
+				Status: "fail",
+				Data: map[string]interface{}{
+					"error": err.Error(),
+				},
+			})
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.JSONResponse{
+		Status: "success",
+		Data: map[string]interface{}{
+			"deposit": data,
 		},
 	})
 }
