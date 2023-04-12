@@ -21,6 +21,7 @@ func Router(r *chi.Mux, walletUsecase service.WalletUsecase) {
 	r.Route("/api/v1/wallet", func(r chi.Router) {
 		r.Use(h.validateToken)
 		r.Post("/", h.enableWallet)
+		r.Get("/", h.getWallet)
 	})
 
 }

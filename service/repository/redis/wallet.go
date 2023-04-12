@@ -35,10 +35,9 @@ func (w *walletRepository) Get(key string) (data string) {
 func (w *walletRepository) Register(costumerXID string) (err error) {
 	id := uuid.New()
 	wallet := models.Wallet{
-		ID:        id.String(),
-		OwnedBy:   costumerXID,
-		Status:    "disabled",
-		EnabledAt: time.Now().String(),
+		ID:      id.String(),
+		OwnedBy: costumerXID,
+		Status:  "disabled",
 	}
 
 	bytWallet, err := json.Marshal(wallet)
@@ -52,4 +51,35 @@ func (w *walletRepository) Register(costumerXID string) (err error) {
 	}
 
 	return
+}
+
+func (w *walletRepository) GetWallet(costumerXID string) (data models.Wallet, err error) {
+	dataStr := w.Get(("wallet:" + costumerXID))
+	err = json.Unmarshal([]byte(dataStr), &data)
+	if err != nil {
+		return data, err
+	}
+
+	return data, nil
+}
+
+func (w *walletRepository) EnableWallet(param models.Wallet) (data models.Wallet, err error) {
+	wallet := models.Wallet{
+		ID:        param.ID,
+		OwnedBy:   param.OwnedBy,
+		Status:    "enabled",
+		EnabledAt: time.Now().String(),
+	}
+
+	bytWallet, err := json.Marshal(wallet)
+	if err != nil {
+		return wallet, err
+	}
+
+	err = w.Set("wallet:"+param.OwnedBy, string(bytWallet))
+	if err != nil {
+		return wallet, err
+	}
+
+	return wallet, err
 }
