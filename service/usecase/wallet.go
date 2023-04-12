@@ -55,6 +55,10 @@ func (w *walletUsecase) GetWallet(costumerXID string) (data models.Wallet, code 
 		return data, 400, fmt.Errorf("Wallet not found")
 	}
 
+	if wallet.Status != "enabled" {
+		return data, 400, fmt.Errorf("Wallet is disabled")
+	}
+
 	return wallet, 200, nil
 }
 
@@ -146,4 +150,25 @@ func (w *walletUsecase) Withdraw(param models.Withdraw) (data models.Withdraw, c
 	}
 
 	return data, 200, nil
+}
+
+func (w *walletUsecase) DisableWallet(costumerXID string) (data models.Wallet, code int, err error) {
+	wallet, err := w.WalletRepo.GetWallet(costumerXID)
+	if err != nil {
+		return data, 500, err
+	}
+
+	if wallet.Status == "enabled" {
+		data, err = w.WalletRepo.DisableWallet(wallet)
+		if err != nil {
+			return data, 500, err
+		}
+
+		return data, 201, nil
+
+	} else if wallet.Status == "disabled" {
+		return data, 400, fmt.Errorf("Already disabled")
+	} else {
+		return data, 400, fmt.Errorf("Wallet not found")
+	}
 }

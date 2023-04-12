@@ -323,3 +323,38 @@ func (h Handler) withdraw(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
+
+func (h Handler) disableWallet(w http.ResponseWriter, r *http.Request) {
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	costumerXID := claims["costumer_xid"].(string)
+
+	data, code, err := h.WalletUsecase.DisableWallet(costumerXID)
+	if err != nil {
+		if code == 400 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(models.JSONResponse{
+				Status: "fail",
+				Data: map[string]interface{}{
+					"error": err.Error(),
+				},
+			})
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(models.JSONResponse{
+				Status: "fail",
+				Data: map[string]interface{}{
+					"error": err.Error(),
+				},
+			})
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(models.JSONResponse{
+		Status: "success",
+		Data: map[string]interface{}{
+			"wallet": data,
+		},
+	})
+}

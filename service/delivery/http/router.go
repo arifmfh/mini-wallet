@@ -25,6 +25,7 @@ func Router(r *chi.Mux, walletUsecase service.WalletUsecase) {
 		r.Get("/transactions", h.getTransactions)
 		r.Post("/deposits", h.deposit)
 		r.Post("/withdrawals", h.withdraw)
+		r.Patch("/", h.disableWallet)
 	})
 
 }

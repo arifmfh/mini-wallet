@@ -223,3 +223,24 @@ func (w *walletRepository) Withdraw(wallet models.Wallet, param models.Withdraw)
 
 	return param, err
 }
+
+func (w *walletRepository) DisableWallet(param models.Wallet) (data models.Wallet, err error) {
+	wallet := models.Wallet{
+		ID:        param.ID,
+		OwnedBy:   param.OwnedBy,
+		Status:    "disabled",
+		EnabledAt: time.Now().Format("2006-01-02T15:04:05-0700"),
+	}
+
+	bytWallet, err := json.Marshal(wallet)
+	if err != nil {
+		return wallet, err
+	}
+
+	err = w.Set("wallet-"+param.OwnedBy+":", string(bytWallet))
+	if err != nil {
+		return wallet, err
+	}
+
+	return wallet, err
+}

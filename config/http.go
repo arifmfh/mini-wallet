@@ -21,7 +21,7 @@ func (c *Config) initChi() error {
 	c.Router.Use(middleware.SetHeader("Content-Type", "application/json"))
 	cors := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods: []string{"GET", "POST", "PATCH"},
 		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Accept-Encoding", "Cookie", "Origin", "X-Api-Key"},
 	})
 	c.Router.Use(cors.Handler)

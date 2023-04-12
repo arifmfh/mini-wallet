@@ -11,4 +11,5 @@ type WalletRepository interface {
 	Deposit(wallet models.Wallet, param models.Deposit) (data models.Deposit, err error)
 	WithdrawCheckReferenceID(referenceID string) (IsDuplicate bool, err error)
 	Withdraw(wallet models.Wallet, param models.Withdraw) (data models.Withdraw, err error)
+	DisableWallet(param models.Wallet) (data models.Wallet, err error)
 }
