@@ -14,5 +14,13 @@ func Router(r *chi.Mux, walletUsecase service.WalletUsecase) {
 		WalletUsecase: walletUsecase,
 	}
 
-	r.Get("/", h.welcome)
+	r.Route("/api/v1/init", func(r chi.Router) {
+		r.Post("/", h.initAccount)
+	})
+
+	r.Route("/api/v1/wallet", func(r chi.Router) {
+		r.Use(h.validateToken)
+		r.Post("/", h.enableWallet)
+	})
+
 }
