@@ -57,3 +57,26 @@ func (w *walletUsecase) GetWallet(costumerXID string) (data models.Wallet, code 
 
 	return wallet, 200, nil
 }
+
+func (w *walletUsecase) Deposit(param models.Deposit) (data models.Deposit, code int, err error) {
+	wallet, err := w.WalletRepo.GetWallet(param.DepositedBy)
+	if err != nil {
+		return data, 500, err
+	}
+
+	if wallet.ID == "" {
+		return data, 400, fmt.Errorf("Wallet not found")
+	}
+	if wallet.Status != "enabled" {
+		return data, 400, fmt.Errorf("Wallet is disabled")
+	}
+
+	wallet.Balance += param.Amount
+
+	data, err = w.WalletRepo.Deposit(wallet, param)
+	if err != nil {
+		return data, 500, err
+	}
+
+	return data, 200, nil
+}

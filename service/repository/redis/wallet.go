@@ -45,7 +45,7 @@ func (w *walletRepository) Register(costumerXID string) (err error) {
 		return err
 	}
 
-	err = w.Set("wallet:"+costumerXID, string(bytWallet))
+	err = w.Set("wallet-"+costumerXID+":", string(bytWallet))
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (w *walletRepository) Register(costumerXID string) (err error) {
 }
 
 func (w *walletRepository) GetWallet(costumerXID string) (data models.Wallet, err error) {
-	dataStr := w.Get(("wallet:" + costumerXID))
+	dataStr := w.Get("wallet-" + costumerXID + ":")
 	err = json.Unmarshal([]byte(dataStr), &data)
 	if err != nil {
 		return data, err
@@ -68,7 +68,7 @@ func (w *walletRepository) EnableWallet(param models.Wallet) (data models.Wallet
 		ID:        param.ID,
 		OwnedBy:   param.OwnedBy,
 		Status:    "enabled",
-		EnabledAt: time.Now().String(),
+		EnabledAt: time.Now().Format("2006-01-02T15:04:05-0700"),
 	}
 
 	bytWallet, err := json.Marshal(wallet)
@@ -76,10 +76,60 @@ func (w *walletRepository) EnableWallet(param models.Wallet) (data models.Wallet
 		return wallet, err
 	}
 
-	err = w.Set("wallet:"+param.OwnedBy, string(bytWallet))
+	err = w.Set("wallet-"+param.OwnedBy+":", string(bytWallet))
 	if err != nil {
 		return wallet, err
 	}
 
 	return wallet, err
+}
+
+func (w *walletRepository) Deposit(wallet models.Wallet, param models.Deposit) (data models.Deposit, err error) {
+	bytWallet, err := json.Marshal(wallet)
+	if err != nil {
+		return data, err
+	}
+
+	err = w.Set("wallet-"+wallet.OwnedBy+":", string(bytWallet))
+	if err != nil {
+		return data, err
+	}
+
+	id := uuid.New()
+	now := time.Now().Format("2006-01-02T15:04:05-0700")
+	trx := models.Transaction{
+		ID:           id.String(),
+		Status:       "success",
+		TransactedAt: now,
+		Type:         "deposit",
+		Amount:       param.Amount,
+		ReferenceID:  param.ReferenceID,
+	}
+
+	var trxs []models.Transaction
+	trxsStr := w.Get("transaction-" + wallet.OwnedBy + ":")
+	if trxsStr != "" {
+		err = json.Unmarshal([]byte(trxsStr), &trxs)
+		if err != nil {
+			return data, err
+		}
+	}
+	trxs = append(trxs, trx)
+
+	bytTrxs, err := json.Marshal(trxs)
+	if err != nil {
+		return data, err
+	}
+
+	err = w.Set("transaction-"+wallet.OwnedBy+":", string(bytTrxs))
+	if err != nil {
+		return data, err
+	}
+
+	param.ID = id.String()
+	param.DepositedBy = wallet.OwnedBy
+	param.Status = "success"
+	param.DepositedAt = now
+
+	return param, err
 }
