@@ -8,4 +8,5 @@ type WalletRepository interface {
 	EnableWallet(param models.Wallet) (data models.Wallet, err error)
 	DepositCheckReferenceID(referenceID string) (IsDuplicate bool, err error)
 	Deposit(wallet models.Wallet, param models.Deposit) (data models.Deposit, err error)
+	GetTransactions(costumerXID string) (data []models.Transaction, err error)
 }

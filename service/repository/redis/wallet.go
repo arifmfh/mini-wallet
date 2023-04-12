@@ -84,6 +84,18 @@ func (w *walletRepository) EnableWallet(param models.Wallet) (data models.Wallet
 	return wallet, err
 }
 
+func (w *walletRepository) GetTransactions(costumerXID string) (data []models.Transaction, err error) {
+	dataStr := w.Get("transaction-" + costumerXID + ":")
+	if dataStr != "" {
+		err = json.Unmarshal([]byte(dataStr), &data)
+		if err != nil {
+			return data, err
+		}
+	}
+
+	return
+}
+
 func (w *walletRepository) DepositCheckReferenceID(referenceID string) (IsDuplicate bool, err error) {
 	data := w.Get("deposit-" + referenceID + ":")
 	if data != "" {

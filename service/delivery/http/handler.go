@@ -207,3 +207,38 @@ func (h Handler) deposit(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
+
+func (h Handler) getTransactions(w http.ResponseWriter, r *http.Request) {
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	costumerXID := claims["costumer_xid"].(string)
+
+	data, code, err := h.WalletUsecase.GetTransactions(costumerXID)
+	if err != nil {
+		if code == 400 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(models.JSONResponse{
+				Status: "fail",
+				Data: map[string]interface{}{
+					"error": err.Error(),
+				},
+			})
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(models.JSONResponse{
+				Status: "fail",
+				Data: map[string]interface{}{
+					"error": err.Error(),
+				},
+			})
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.JSONResponse{
+		Status: "success",
+		Data: map[string]interface{}{
+			"transactions": data,
+		},
+	})
+}
