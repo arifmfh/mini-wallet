@@ -34,6 +34,18 @@ func (h Handler) initAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = h.WalletUsecase.Register(costumerXID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.JSONResponse{
+			Status: "fail",
+			Data: map[string]interface{}{
+				"error": err.Error(),
+			},
+		})
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(models.JSONResponse{
 		Status: "fail",
