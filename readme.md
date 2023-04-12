@@ -2,11 +2,11 @@
 This Project is fully written in GO and using Redis as database. This code structure implement Clean Architecture Pattern, separated in 3-layer (delivery/presentation, usecase, repository)
 
 And still need some Improvement below:
-- Implement Queue FIFO (Apache Kafka/rabbitMQ/Google Pubsub) for procesing transaction
+- Implement FIFO Queue (Apache Kafka/rabbitMQ/Google Pubsub) for procesing transaction
 - Add Unit Testing 
 - Migrate to SQL database if necessary
 
-## Prerequisted
+## Prerequisites
 - Golang
 - Redis
 
